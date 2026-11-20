@@ -93,6 +93,13 @@ discover_target() {
     run_user /usr/bin/dig @8.8.8.8 +time=1 +tries=1 +short "$HOST" A >"$DIR/google" 2>/dev/null &
     wait
     /usr/bin/awk '/^([0-9]{1,3}\.){3}[0-9]{1,3}$/' "$DIR/system" "$DIR/cloudflare" "$DIR/google" 2>/dev/null | /usr/bin/sort -u >"$DIR/ips"
+    if [ ! -s "$DIR/ips" ]; then
+        run_user /usr/bin/dig +tcp +time=2 +tries=1 +short "$HOST" A >"$DIR/system" 2>/dev/null &
+        run_user /usr/bin/dig @1.1.1.1 +tcp +time=2 +tries=1 +short "$HOST" A >"$DIR/cloudflare" 2>/dev/null &
+        run_user /usr/bin/dig @8.8.8.8 +tcp +time=2 +tries=1 +short "$HOST" A >"$DIR/google" 2>/dev/null &
+        wait
+        /usr/bin/awk '/^([0-9]{1,3}\.){3}[0-9]{1,3}$/' "$DIR/system" "$DIR/cloudflare" "$DIR/google" 2>/dev/null | /usr/bin/sort -u >"$DIR/ips"
+    fi
     NUMBER=0
     while IFS= read -r IP; do
         NUMBER=$((NUMBER + 1))
@@ -159,7 +166,7 @@ wait_for_engine() {
     while [ "$I" -lt 80 ]; do
         if cancel_requested; then return 2; fi
         NEW_PID=$(/usr/bin/pgrep -x utunws 2>/dev/null | /usr/bin/head -1)
-        if [ -n "$NEW_PID" ] && [ "$NEW_PID" != "$OLD_PID" ] && /sbin/ifconfig utun50 >/dev/null 2>&1 && /sbin/pfctl -a com.apple/zapret-macos -sr 2>/dev/null | /usr/bin/grep -q route-to; then
+        if [ -n "$NEW_PID" ] && [ "$NEW_PID" != "$OLD_PID" ] && /sbin/ifconfig utun50 >/dev/null 2>&1; then
             return 0
         fi
         I=$((I + 1))

@@ -336,6 +336,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func checkForUpdate() {
+        guard #available(macOS 14.0, *) else { return }
         if checkingForUpdate || updating { return }
         checkingForUpdate = true
         let url = URL(string: releaseURL.absoluteString + "?t=\(Int(Date().timeIntervalSince1970 * 1000))&per_page=1")!
@@ -372,6 +373,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func installUpdate() {
+        guard #available(macOS 14.0, *) else { return }
         guard let release = availableRelease,
               let asset = release.assets.first(where: { $0.name == releaseAssetName }),
               !updating else { return }

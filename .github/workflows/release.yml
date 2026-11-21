@@ -62,6 +62,7 @@ jobs:
 
           gh release create "${{ inputs.tag }}" \
             artifact/ZapretMac-macOS-universal.zip \
+            artifact/ZapretMac-macOS12-universal.dmg \
             --repo "${{ github.repository }}" \
             --title "${{ inputs.tag }}" \
             --generate-notes

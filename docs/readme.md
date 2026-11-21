@@ -15,11 +15,17 @@
 - Выключите другие VPN'ы с туннелированием
 - Установите DNS отличный от стандартного (или настройте его на роутере), например на Google (8.8.8.8/8.8.4.4) или Cloudflare (1.1.1.1/1.0.0.1)
   - Более лучшим решением будет установить DNS over HTTPS через профиль. Например на Google Public DNS отсюда - https://github.com/paulmillr/encrypted-dns
-- Соберите приложение командой `./macos/build.sh`, распакуйте `dist/ZapretMac-macOS-universal.zip` и переместите `ZapretMac.app` в `/Applications`
+- Скачайте `ZapretMac-macOS12-universal.dmg` из [релизов](https://github.com/TheWonnder/zapret-discord-youtube-mac-intel/releases), откройте его и перетащите `ZapretMac.app` в `/Applications`
 - Откройте приложение, в появившемся предупреждении нажмите **Done** или **OK**
   - В новых версиях macOS можно разрешить открытие приложения через контекстное меню (ПКМ по файлу) -> **Open** (**Открыть**) -> **Open** (**Открыть**). Если это не ваш случай, то воспользуйтесь инструкцией ниже
   - Зайдите в **System Settings** (**Системные настройки**) -> **Privacy & Security** (**Конфиденциальность и безопасность**) -> пролистайте вниз -> нажмите кнопку **Open Anyway** (**Подтвердить вход**)
 - В трей меню выберите стратегию и нажмите **Запустить**
+
+### Обновление конфигов
+
+Пункт меню **«Обновить конфиги»** скачивает актуальную Windows-сборку Flowseal, преобразует все `general*.bat` в macOS-стратегии и обновляет списки и бинарные ресурсы. Перед применением каждая стратегия проверяется через `utunws --dry-run`.
+
+Файлы `*-user.txt` сохраняются. Если обход запущен, он автоматически перезапускается с новыми конфигурациями.
 
 ### Списки
 
@@ -43,9 +49,9 @@
 ./macos/build.sh
 ```
 
-`dist/ZapretMac-macOS-universal.zip`.
+Результат: `dist/ZapretMac-macOS-universal.zip` и `dist/ZapretMac-macOS12-universal.dmg`.
 
-GitHub Actions workflow `.github/workflows/macos.yml` собирает тот же universal-архив
+GitHub Actions workflow `.github/workflows/macos.yml` собирает оба установочных файла
 
 ## Прочее
 

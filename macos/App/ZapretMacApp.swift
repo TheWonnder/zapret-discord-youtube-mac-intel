@@ -53,9 +53,11 @@ struct ZapretMacMain {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let fileManager = FileManager.default
     private let menu = NSMenu()
+    private let strategyMenu = NSMenu()
     private var statusItem: NSStatusItem!
     private var startStopItem = NSMenuItem()
     private var testItem = NSMenuItem()
+    private var updateConfigsItem = NSMenuItem()
     private var versionItem = NSMenuItem()
     private var strategyItems: [NSMenuItem] = []
     private var ipsetItems: [NSMenuItem] = []
@@ -70,7 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var availableRelease: GitHubRelease?
     private var authorization: AuthorizationRef?
 
-    private let releaseURL = URL(string: "https://api.github.com/repos/Flowseal/zapret-mac-discord-youtube/releases")!
+    private let releaseURL = URL(string: "https://api.github.com/repos/TheWonnder/zapret-discord-youtube-mac-intel/releases")!
     private let releaseAssetName = "ZapretMac-macOS-universal.zip"
 
     private var dataRoot: URL {
@@ -151,14 +153,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(startStopItem)
 
         let strategyRoot = NSMenuItem(title: "Выбор стратегии", action: nil, keyEquivalent: "")
-        let strategyMenu = NSMenu()
-        for strategy in strategies {
-            let item = NSMenuItem(title: strategy.name, action: #selector(selectStrategy(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = strategy.id
-            strategyMenu.addItem(item)
-            strategyItems.append(item)
-        }
+        rebuildStrategyMenu()
         strategyRoot.submenu = strategyMenu
         menu.addItem(strategyRoot)
 
@@ -178,6 +173,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         testItem = NSMenuItem(title: "Тест стратегий", action: #selector(testStrategies), keyEquivalent: "")
         testItem.target = self
         menu.addItem(testItem)
+        updateConfigsItem = NSMenuItem(title: "Обновить конфиги", action: #selector(updateConfigs), keyEquivalent: "")
+        updateConfigsItem.target = self
+        menu.addItem(updateConfigsItem)
         let openLists = NSMenuItem(title: "Открыть списки", action: #selector(openLists), keyEquivalent: "")
         openLists.target = self
         menu.addItem(openLists)
@@ -189,6 +187,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let quit = NSMenuItem(title: "Выход", action: #selector(quitApp), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
+    }
+
+    private func rebuildStrategyMenu() {
+        strategyMenu.removeAllItems()
+        strategyItems.removeAll()
+        for strategy in strategies {
+            let item = NSMenuItem(title: strategy.name, action: #selector(selectStrategy(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = strategy.id
+            strategyMenu.addItem(item)
+            strategyItems.append(item)
+        }
     }
 
     private func refreshMenu() {
@@ -219,6 +229,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             testItem.title = "Тест стратегий"
         }
         testItem.isEnabled = testing ? !cancellingTest : !busy
+        updateConfigsItem.isEnabled = !busy && !testing && !updating
         if updating {
             versionItem.title = "Установка обновления.."
         } else if let release = availableRelease {
@@ -538,6 +549,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    @objc private func updateConfigs() {
+        runPrivileged(
+            script: "update-configs.sh",
+            arguments: [dataRoot.path, Bundle.main.bundleURL.path, String(getuid()), String(getgid())]
+        ) { [weak self] failure in
+            guard let self, failure == nil else { return }
+            do {
+                self.strategies = try self.loadStrategies()
+                self.rebuildStrategyMenu()
+                self.refreshMenu()
+                self.showInformation("Конфиги обновлены из репозитория Flowseal")
+            } catch {
+                self.showError(error.localizedDescription)
+            }
+        }
+    }
+
     @objc private func quitApp() {
         NSApp.terminate(nil)
     }
@@ -557,7 +585,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try self.fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: true)
                 try self.fileManager.copyItem(at: payload, to: stagedPayload)
                 var commandArguments = [stagedPayload.path]
-                if script == "install.sh" || script == "test-strategies.sh" {
+                if script == "install.sh" || script == "test-strategies.sh" || script == "update-configs.sh" {
                     commandArguments = [stagedPayload.path] + dataArguments
                 } else {
                     commandArguments = dataArguments

@@ -17,5 +17,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ZapretMac-macOS-universal
-          path: dist/ZapretMac-macOS-universal.zip
+          path: |
+            dist/ZapretMac-macOS-universal.zip
+            dist/ZapretMac-macOS12-universal.dmg
           if-no-files-found: error
